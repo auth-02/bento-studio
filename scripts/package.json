@@ -1,0 +1,12 @@
+{
+  "name": "bento-studio-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Maintainer tooling for Bento Studio (kept out of the zero-dependency app root).",
+  "scripts": {
+    "regen": "node regen-example.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

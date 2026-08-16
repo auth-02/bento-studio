@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 76" width="300" height="76" role="img" aria-label="Bento Studio">
+  <rect x="1" y="1" width="298" height="74" rx="15" fill="#f1eee8" stroke="rgba(29,25,22,.12)" stroke-width="1"/>
+  <g transform="translate(24,20) scale(1.5)" fill="#1d1916">
+    <rect x="1"  y="1"  width="13" height="13" rx="3.2" opacity=".95"/>
+    <rect x="16" y="1"  width="7"  height="7"  rx="2.1" opacity=".55"/>
+    <rect x="16" y="10" width="7"  height="13" rx="2.1" opacity=".78"/>
+    <rect x="1"  y="16" width="13" height="7"  rx="2.1" opacity=".4"/>
+  </g>
+  <text x="78" y="47" font-family="Georgia, 'Times New Roman', serif" font-size="28" font-weight="500" fill="#1d1916">Bento Studio</text>
+</svg>

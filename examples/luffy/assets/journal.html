@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Grand Line — Adventure Journal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Libre+Baskerville:wght@400;700&display=swap');
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  color:#34291d;
+  background:#2b241b;
+  font-family:'Libre Baskerville',serif;
+}
+.book{
+  max-width:1050px;
+  margin:32px auto;
+  padding:55px clamp(24px,6vw,75px);
+  background:
+    radial-gradient(circle at 20% 10%,rgba(255,255,255,.35),transparent 22%),
+    radial-gradient(circle at 80% 80%,rgba(91,53,18,.13),transparent 28%),
+    #e7d2a4;
+  box-shadow:0 18px 55px #0009;
+  border:1px solid #8e6b3e;
+  min-height:1100px;
+  position:relative;
+}
+.book:before{
+  content:"";
+  position:absolute;
+  inset:12px;
+  border:1px solid #9b7849;
+  pointer-events:none;
+}
+.cover{text-align:center;padding:35px 10px 50px}
+.stamp{
+  display:inline-block;
+  border:2px solid #714d2c;
+  padding:8px 18px;
+  transform:rotate(-4deg);
+  font-family:Caveat,cursive;
+  font-size:20px;
+}
+h1{
+  font-family:Caveat,cursive;
+  font-size:clamp(55px,9vw,100px);
+  line-height:.9;
+  margin:22px 0 8px;
+}
+.subtitle{font-family:Caveat,cursive;font-size:28px}
+.sketch{font-size:58px;margin:25px}
+.entry{
+  border-top:1px dashed #967348;
+  padding:30px 0;
+  display:grid;
+  grid-template-columns:130px 1fr;
+  gap:25px;
+}
+.date{
+  font-family:Caveat,cursive;
+  font-size:24px;
+  transform:rotate(-2deg);
+}
+h2{font-size:27px;margin:0 0 10px}
+p{line-height:1.75;margin:8px 0}
+.note{
+  margin-top:16px;
+  padding:15px 18px;
+  background:#d8bd89aa;
+  border-left:4px solid #76512e;
+  font-family:Caveat,cursive;
+  font-size:22px;
+}
+.route{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:18px;
+}
+.route span{
+  border:1px solid #80603b;
+  border-radius:50%;
+  padding:10px 14px;
+  font-family:Caveat,cursive;
+  font-size:19px;
+  background:#ead7ad99;
+}
+.footer{
+  text-align:center;
+  padding-top:40px;
+  font-family:Caveat,cursive;
+  font-size:28px;
+}
+@media(max-width:650px){
+  .book{margin:0;padding:35px 24px}
+  .entry{grid-template-columns:1fr;gap:5px}
+}
+</style>
+</head>
+<body>
+<main class="book">
+  <section class="cover">
+    <div class="stamp">EXPLORER'S JOURNAL • GRAND LINE</div>
+    <div class="sketch">🧭</div>
+    <h1>The Grand Line</h1>
+    <div class="subtitle">An Adventure Journal from the World of One Piece</div>
+    <p style="margin-top:25px">“The sea is vast. The adventure is only beginning.”</p>
+  </section>
+
+  <section class="entry">
+    <div class="date">Entry 01<br>Departure</div>
+    <div>
+      <h2>Into the Age of Pirates</h2>
+      <p>
+        The world changed when Gol D. Roger reached the end of his journey.
+        His final words set countless dreamers toward the sea, beginning the
+        Great Pirate Era and a race toward the legendary treasure known as the One Piece.
+      </p>
+      <div class="note">✎ Every great adventure begins with someone willing to set sail.</div>
+    </div>
+  </section>
+
+  <section class="entry">
+    <div class="date">Entry 02<br>The Route</div>
+    <div>
+      <h2>The Grand Line</h2>
+      <p>
+        A dangerous ocean route where ordinary rules seem to disappear.
+        Strange islands, unpredictable weather, powerful pirates and enormous mysteries
+        turn every stretch of the journey into a new story.
+      </p>
+      <div class="route">
+        <span>East Blue</span><span>Grand Line</span><span>Red Line</span>
+        <span>New World</span><span>Laugh Tale</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="entry">
+    <div class="date">Entry 03<br>Mysteries</div>
+    <div>
+      <h2>Things We Still Don't Understand</h2>
+      <p>
+        Ancient history lies beneath the surface of the world. The Void Century,
+        the Ancient Weapons, the Will of D., and the strange secrets surrounding
+        the world's rulers remain pieces of a much larger puzzle.
+      </p>
+      <div class="note">⚠ Warning: some answers may change everything we know about the world.</div>
+    </div>
+  </section>
+
+  <section class="entry">
+    <div class="date">Entry 04<br>The Dream</div>
+    <div>
+      <h2>What Is the One Piece?</h2>
+      <p>
+        The greatest treasure of the pirate age waits somewhere at the end of the
+        journey. Its true nature remains one of the world's greatest mysteries.
+        Whoever finds it may uncover the truth behind the age itself.
+      </p>
+    </div>
+  </section>
+
+  <section class="entry">
+    <div class="date">Final Entry<br>Unknown</div>
+    <div>
+      <h2>Laugh Tale</h2>
+      <p>
+        Somewhere beyond the final reaches of the Grand Line lies the island
+        reached by Gol D. Roger and his crew. The destination is known.
+        The full story waiting there is not.
+      </p>
+      <div class="note">✎ The final page of this journal has not been written yet.</div>
+    </div>
+  </section>
+
+  <div class="footer">
+    ⚓ Keep sailing. Keep dreaming. The adventure continues. 🌊
+  </div>
+</main>
+</body>
+</html>
