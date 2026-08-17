@@ -3,21 +3,21 @@
  * Regenerate an example's exports from the CURRENT Bento Studio code.
  *
  * Drives the real Studio in a headless browser: imports the example's existing
- * gallery (preserving exact layout/positions/assets via the app's own lossless
+ * page (preserving exact layout/positions/assets via the app's own lossless
  * round-trip), then re-exports all four artifacts through the actual export UI:
  *
- *   examples/<name>/gallery/<name>-gallery.html   (gallery · single file)
- *   examples/<name>/gallery/<name>-gallery.zip    (gallery · folder)
+ *   examples/<name>/page/<name>-page.html   (page · single file)
+ *   examples/<name>/page/<name>-page.zip    (page · folder)
  *   examples/<name>/studio/<name>-studio.html     (Studio copy · single file)
  *   examples/<name>/studio/<name>-studio.zip       (Studio copy · folder)
  *
- * The gallery single-file (with embedded state) is the import source of truth.
+ * The page single-file (with embedded state) is the import source of truth.
  *
  * Usage:
  *   node scripts/regen-example.mjs <name>          # default: luffy
- *   node scripts/regen-example.mjs <name> --check  # also verify the gallery renders
+ *   node scripts/regen-example.mjs <name> --check  # also verify the page renders
  *
- * With --check, after regenerating it reopens the gallery single-file and fails
+ * With --check, after regenerating it reopens the page single-file and fails
  * (exit 1) if no items land on-canvas — so a broken/empty export can't ship
  * silently. (Catches the off-canvas coordinate drift that produced a blank page.)
  *
@@ -36,16 +36,16 @@ const NAME = argv.find(a => !a.startsWith('--')) || 'luffy';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const APP = resolve(ROOT, 'bento-studio.html');
 const EX = resolve(ROOT, 'examples', NAME);
-const SRC_GALLERY = resolve(EX, 'gallery', `${NAME}-gallery.html`);
+const SRC_PAGE = resolve(EX, 'page', `${NAME}-page.html`);
 
 const OUT = {
-  'page:single':     resolve(EX, 'gallery', `${NAME}-gallery.html`),
-  'page:zip':        resolve(EX, 'gallery', `${NAME}-gallery.zip`),
+  'page:single':     resolve(EX, 'page', `${NAME}-page.html`),
+  'page:zip':        resolve(EX, 'page', `${NAME}-page.zip`),
   'editable:single': resolve(EX, 'studio', `${NAME}-studio.html`),
   'editable:zip':    resolve(EX, 'studio', `${NAME}-studio.zip`),
 };
 
-for (const p of [APP, SRC_GALLERY]) {
+for (const p of [APP, SRC_PAGE]) {
   if (!existsSync(p)) { console.error(`✗ missing: ${p}`); process.exit(1); }
 }
 
@@ -61,18 +61,18 @@ try {
   await page.goto(pathToFileURL(APP).href, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof state !== 'undefined' && !!document.querySelector('#importInput'), null, { timeout: 30000 });
 
-  log('import source gallery', SRC_GALLERY);
+  log('import source page', SRC_PAGE);
   // Record the boot sample's id so we can wait for the import to actually swap it in
   // (importFile → adoptState is async, and the sample already has items).
   const beforeId = await page.evaluate(() => (typeof state !== 'undefined' && state) ? state.id : null);
-  await page.setInputFiles('#importInput', SRC_GALLERY);
+  await page.setInputFiles('#importInput', SRC_PAGE);
   await page.waitForFunction(
     prev => state && state.id && state.id !== prev && Array.isArray(state.items) && state.items.length > 0,
     beforeId, { timeout: 30000 });
   const info = await page.evaluate(() => ({ title: state.title, items: state.items.length }));
   log(`loaded "${info.title}" · ${info.items} items`);
 
-  // Normalize coordinates before exporting. A gallery export shifts items to be
+  // Normalize coordinates before exporting. A page export shifts items to be
   // frame-relative but leaves the frame's own offset in the embedded state, so a
   // naive import→export round-trip double-shifts and drifts items off-canvas.
   // fitFrameToContent() wraps the frame around the actual content and calls
@@ -102,7 +102,7 @@ try {
 
   if (CHECK) {
     const target = OUT['page:single'];
-    log('check: verifying gallery renders', target);
+    log('check: verifying page renders', target);
     await page.goto(pathToFileURL(target).href, { waitUntil: 'load' });
     await page.waitForTimeout(1500);
     // "Not empty" = at least one non-spacer item is a real box that intersects
@@ -119,7 +119,7 @@ try {
       return { items: items.length, onCanvas };
     });
     if (res.onCanvas < 1) {
-      console.error(`✗ CHECK FAILED: gallery renders empty — 0 of ${res.items} items on-canvas (${target})`);
+      console.error(`✗ CHECK FAILED: page renders empty — 0 of ${res.items} items on-canvas (${target})`);
       process.exitCode = 1;
     } else {
       log(`check OK · ${res.onCanvas}/${res.items} items on-canvas`);
