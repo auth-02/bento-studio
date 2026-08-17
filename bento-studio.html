@@ -2298,7 +2298,7 @@ function fileToText(file) {
 async function urlToDataURL(url) {
   if (!url || /^data:/i.test(url)) return url || '';
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
+  const timer = setTimeout(() => ctrl.abort(), 30000);
   let r;
   try {
     r = await fetch(url, { mode: 'cors', cache: 'force-cache', signal: ctrl.signal });
@@ -6120,7 +6120,8 @@ function xhtmlify(html) {
     (m, tag, attrs) => `<${tag}${attrs.replace(/\/$/, '')}/>`);
 }
 
-/** Collect every remote (non-data:) media URL currently in use. */
+/** Collect every cross-origin (http/https) media URL currently in use — the
+ *  user-linked remotes that the "embed remote image" choice governs. */
 function remoteURLs() {
   const out = new Set();
   for (const it of state.items) {
@@ -6132,18 +6133,59 @@ function remoteURLs() {
   return [...out];
 }
 
-/** Replace remote URLs with data: URIs so the artifact is self-contained. */
-async function inlineRemote(items) {
-  const urls = remoteURLs();
+/** Same-origin media served from an assets/ folder — i.e. a folder-deployed,
+ *  hosted Studio whose media were externalised on export. Unlike user-linked
+ *  remotes these MUST always be re-inlined for a self-contained single file
+ *  (leaving the relative paths behind just yields broken references), so they
+ *  are gathered separately and inlined regardless of the remote-image choice. */
+// Same-origin refs live either as a whole field value (image/data/poster) or
+// inside an html/text field's src/href attribute (a journal, an embed). This
+// attribute pattern deliberately anchors to `attr="assets/…"` so it can NEVER
+// match an `assets/` substring that occurs by chance inside base64 — and we
+// skip any value that is itself a data: URI for the same reason.
+const ASSET_ATTR_RE = /(src|href|poster|data-src)(\s*=\s*["'])(assets\/[^"'\\]+)(["'])/gi;
+function localAssetURLs() {
+  const out = new Set();
+  for (const it of state.items) {
+    for (const v of Object.values(it)) {
+      if (typeof v !== 'string' || !v || v.startsWith('data:')) continue;
+      if (/^assets\/[^\s"'\\]+$/.test(v)) { out.add(v); continue; }   // whole-value media field
+      if (v.includes('assets/')) {                                    // embedded in html/text
+        let m; ASSET_ATTR_RE.lastIndex = 0;
+        while ((m = ASSET_ATTR_RE.exec(v))) out.add(m[3]);
+      }
+    }
+  }
+  return [...out];
+}
+
+/** Replace external URLs with data: URIs so the artifact is self-contained.
+ *  Same-origin assets/ paths are always inlined; cross-origin remotes are
+ *  included unless localOnly is set (the "keep linking to originals" choice).
+ *  Whole-value fields are swapped directly; refs embedded in html/text are
+ *  rewritten only inside their attribute — never by blind substring match,
+ *  which would corrupt any base64 that happens to contain the path. */
+async function inlineRemote(items, { localOnly = false } = {}) {
+  const urls = localOnly
+    ? localAssetURLs()
+    : [...new Set([...localAssetURLs(), ...remoteURLs()])];
   if (!urls.length) return { items, failed: [] };
   const map = new Map(), failed = [];
   await Promise.all(urls.map(async u => {
     try { map.set(u, await urlToDataURL(u)); }
     catch { failed.push(u); }
   }));
+  if (!map.size) return { items, failed };
   const next = items.map(it => {
     const o = { ...it };
-    for (const k of ['image', 'data', 'poster']) if (o[k] && map.has(o[k])) o[k] = map.get(o[k]);
+    for (const [k, v] of Object.entries(o)) {
+      if (typeof v !== 'string' || !v || v.startsWith('data:')) continue;
+      if (map.has(v)) { o[k] = map.get(v); continue; }               // whole-value
+      if (v.includes('assets/')) {                                   // embedded refs
+        o[k] = v.replace(ASSET_ATTR_RE, (full, a, eq, url, q) =>
+          map.has(url) ? a + eq + map.get(url) + q : full);
+      }
+    }
     return o;
   });
   return { items: next, failed };
@@ -6223,6 +6265,9 @@ function externalizeHTML(html, prefix = 'assets/') {
   const files = [];
   let n = 0;
   const out = html.replace(/"(data:[^"]*)"/g, (m, url) => {
+    // Internal single-file tabling token (and the source literal that defines
+    // it, embedded in a Studio copy) — NOT a real asset. Leave it untouched.
+    if (url.startsWith('data:x-bento-asset')) return m;
     if (table.has(url)) return `"${table.get(url)}"`;
     let bytes;
     try { bytes = anyDataURLBytes(url); }
@@ -6326,7 +6371,9 @@ function makeZip(entries) {
 async function buildHTML({ trim, inline, embedState, tableAssets = true }) {
   let items = state.items;
   let failed = [];
-  if (inline) ({ items, failed } = await inlineRemote(items));
+  // Same-origin assets/ paths are always inlined so the file is self-contained;
+  // cross-origin remotes follow the "embed remote image" choice.
+  ({ items, failed } = await inlineRemote(items, { localOnly: !inline }));
 
   const frame = frameFor(trim);
   const placed = shiftItems(items, frame);
@@ -6616,7 +6663,9 @@ ${embedState ? `<script type="application/json" id="bento-state">${stateT}<\/scr
 async function buildEditable({ inline }) {
   let items = state.items;
   let failed = [];
-  if (inline) ({ items, failed } = await inlineRemote(items));
+  // Same-origin assets/ paths are always inlined so the file is self-contained;
+  // cross-origin remotes follow the "embed remote image" choice.
+  ({ items, failed } = await inlineRemote(items, { localOnly: !inline }));
 
   const doc = document.documentElement.cloneNode(true);
   const q = sel => doc.querySelector(sel);
@@ -6651,6 +6700,12 @@ async function buildEditable({ inline }) {
 
   const body = doc.querySelector('body');
   if (body) body.setAttribute('data-mode', 'edit');
+
+  // If this copy is itself made from a Studio copy (or a hosted one), the clone
+  // already carries an embedded state — and its asset table. Drop both, or the
+  // stale first #bento-state wins on boot (getElementById returns it) and the
+  // page loads the old asset/token paths instead of the freshly inlined ones.
+  for (const n of doc.querySelectorAll('#bento-state, #bento-assets')) n.remove();
 
   // The page itself, read by boot() on the other side.
   const payload = { ...state, items, frame: { ...state.frame }, updated: state.updated || Date.now() };
@@ -6963,7 +7018,10 @@ function extractState(text) {
       const A = JSON.parse(am[1].replace(/\\u003c/g, '<'));
       const deref = v => (typeof v === 'string')
         ? v.replace(/data:x-bento-asset,(\d+)/g, (_, i) => A[+i] || '') : v;
-      for (const it of st.items) for (const k of ['image', 'data', 'poster']) if (it[k]) it[k] = deref(it[k]);
+      // Re-inflate EVERY string field, not just image/data/poster — tokens can
+      // also live inside an html/embed field, and a survivor would later be
+      // mistaken for a real asset on re-export.
+      for (const it of st.items) for (const k of Object.keys(it)) if (typeof it[k] === 'string') it[k] = deref(it[k]);
     } catch (e) {}
   }
   return st;
